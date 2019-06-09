@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">   
+        <title>Sliding window protocol</title>
+        <link rel="stylesheet" type="text/css" media="screen" href="style.css" />
+        <script type="text/javascript">                   
+        var c=0;
+        function startStop()
+        {        
+                var elem = document.getElementById("start");
+                elem.setAttribute("value","stop");            
+                sender(1,"pkg transmit",5);                                            
+        }
+        
+        function receiver1(k,no,se,name)
+        {                                                                       
+            var p=340;      
+            var a = document.getElementById(se+no);            
+            var id=setInterval(frame,6);            
+            function frame()
+            {
+                if(p==15)
+                {                    
+                    clearInterval(id);                                        
+                    show(k+no,"t","pkg confirm");          
+                    a.parentNode.removeChild(a);
+                    return;                                                                             
+                }                
+                else {
+                    a.addEventListener("click",function(){clearInterval(id); a.parentNode.removeChild(a);  return; });                                             
+                    p--;               
+                    a.style.top = p + 'px';  
+                    show(no,se,name);
+                }   
+             }               
+        }        
+        
+        function sender1(k,no,se)
+        {                                        
+            var p1=15;            
+            var a = document.getElementById(se+no);             
+            var id = setInterval(frame, 6);
+            function frame() {                
+                if(p1==340)
+                {                    
+                    clearInterval(id);                      
+                    show(k+no+30,"t","pkg transmit");
+                    show(no,"seq","pkg transmit");                        
+                    check_receive(k+no);    
+                    receiver1(k,no,se,"pkg ack");    
+                }                
+                else {
+                            a.addEventListener("click",function(){ clearInterval(id); a.remove();                       });                             
+                            p1++;               
+                            a.style.top = p1 + 'px';                      
+                    }                        
+              }                
+        }
+        
+        function show(id_r, ca, name)
+        {              
+            e=document.getElementById(ca+id_r); 
+            e.className=name;
+        }        
+        function sender(k,name,count)
+        {                                
+                var i=0;
+                for(c_i=0;i<count;i++)
+                {
+                
+                    var iDiv = document.createElement('div');
+                    var cw=(k%5)+i-1;
+                    iDiv.id = 'seq'+cw;
+                    iDiv.className="pkg buffer";
+                    
+                    iDiv.style.left=23*(i+k)+'px';
+                    iDiv.style.top=15+'px';
+                    main.appendChild(iDiv);                    
+                   document.getElementById(iDiv.id).innerHTML=(k%5)+i-1;
+                   setTimeout(sender1,100*i,k,(k%5)+i-1,"seq");
+                }                    
+                
+                setTimeout(check_confirmation,1000,k);                               
+       }                             
+       function check_receive(k)
+       {            
+            k=k+30;
+            
+            var b=0;     
+            for(var i=31;i<=k;i++)
+            {
+               
+               var x1=document.getElementById('t'+i).className; 
+               if(x1=="pkg transmit")
+                        b++; 
+            }
+            var rt =0;
+            if(b==(k-30))
+            slide_window("window2",23,k-30);              
+            for(var i=k;i<k+(5-b)+6;i++)
+            {
+                var elem = document.getElementById("window2");
+                var a=window.getComputedStyle(elem,null).getPropertyValue("left");           
+                a=parseInt(a,10); 
+                var a1=(a-25)/23;                   
+                var x1=document.getElementById('t'+i).className; 
+                if(x1=="pkg transmit")
+                {           
+                    console.log(a1+1,i-30,k);
+                    if((a1+1)==(i-30))
+                        slide_window("window2",23,i-30);  
+                   rt++;
+                }            
+                if(rt==5)
+                {
+                    console.log(a1+1,i-30,k);                    
+                    rt = 5-rt;
+                    slide_window("window2",23*rt,i-30);  
+                    rt =0;
+                }
+            }               
+            
+        }
+        function check_confirmation(k)
+        {
+            var c=0;
+            var id_w=setInterval(frame,5000);            
+            function frame(){
+            if(c==5)
+            {
+                clearInterval(id_w);
+                slide_window("window1",115,k);               
+                if(k+5<=30) sender(k+5,"pkg transmit",5);     
+            }
+            else
+            {
+                c=0;
+                for(var i=0;i<5;i++)
+                {          
+                    var c1=k+i;
+                    var x1=document.getElementById('t'+c1).className;
+                    if(x1!="pkg confirm")
+                     {
+                        if(document)
+                        var iDiv = document.createElement('div');
+                        var cw=(k%5)-1+i;
+                        iDiv.id = 'seq'+cw;
+                        iDiv.className="pkg buffer";                                               
+                        iDiv.style.left=23*(i+k)+'px';
+                        iDiv.style.top=15+'px';
+                        main.appendChild(iDiv);                    
+                        document.getElementById(iDiv.id ).innerHTML=cw;
+                        setTimeout(sender1,100*(i+1),k,cw,"seq");                        
+                   }
+                   else  c++;                       
+                }               
+            }
+        }                
+        }
+        function slide_window(name,k1,k2)
+        {            
+            var elem = document.getElementById(name);
+            var a=window.getComputedStyle(elem,null).getPropertyValue("left");           
+            a=parseInt(a,10);
+                a=a+k1;                        
+                if(a<715) elem.style.left=a+'px';
+        }
+        </script>
+       </head>        
+
+    <body id="check">
+    	<h1 "font-size:  10px">Sliding Window Protocol</h1>
+    
+  
+<div class="config">
+        <div class="form-item" id="start_button">
+            <h3><label for="">Start the transmission packets</label></h3>            
+            <input type="button" id="start" class="button1" onclick="startStop();" value="start" />
+           
+            <div class="description">starts or stops the transmission of packets</div>
+        </div>                      
+    <div class="Data_des">
+		<h2 style="margin-bottom: 0.3em;">Data description</h2>
+		<table>
+			<tr>
+				<td><div class="Data_type" style="background-color: white;">&nbsp;</div></td>
+				<td>no data received yet</td>
+			</tr>
+			<tr>
+				<td><div class="Data_type" style="background-color: yellow;">&nbsp;</div></td>
+				<td>data buffered (ready to send, delivered or sent but no ack received yet)</td>
+			</tr>
+			<tr>
+				<td><div class="Data_type" style="background-color: #00adef;">&nbsp;</div></td>
+				<td>ack</td>
+			</tr>
+			<tr>
+				<td><div class="Data_type" style="background-color:  green;">&nbsp;</div></td>
+				<td>transmission confirmed</td>
+			</tr>
+			<tr>
+				<td><div class="Data_type" style="background-color: #A0522D;">&nbsp;</div></td>
+				<td>data has been delivered to upper network layer</td>
+			</tr>			
+		</table>
+	</div>
+	</div>
+	<div class="simulation"  >
+	<div id="main">	    
+    <script>
+    var j=31;       
+    for(var i=1;i<=30;i++,j++)
+    {   document.getElementById('main').innerHTML =document.getElementById('main').innerHTML+ '<div id="t'+i+'" class="pkg buffer" style="left:'+23*i+'px; top:15px;"></div><div id="t'+j+'"class="pkg empty" style="left:'+23*i+'px; top:340px;"> &nbsp;</div>';
+    }       
+        </script>         
+        <div id="window1">&nbsp;</div>
+        <div id="window2">&nbsp;</div>
+        </div>  		
+	</div>
+    </body>
+</html>
